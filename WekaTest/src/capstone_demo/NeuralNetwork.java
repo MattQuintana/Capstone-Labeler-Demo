@@ -24,6 +24,7 @@ public class NeuralNetwork {
         }
 	}
 	
+	// Normalize a value to be between 0 and 1
 	private static double nonlin(double x) {
     	return 1/(1 + Math.exp(-x));
     }
@@ -94,6 +95,7 @@ public class NeuralNetwork {
 	        	// Lower the weights associated with the wrong guess 
 	        	for (int matx_row = 0; matx_row < w_mean_array.length; matx_row++) {
 	        		for (int matx_col = 0; matx_col < w_mean_array[matx_row].length; matx_col++) {
+	        			// Lower the weight of the wrong guess 
 	        			if (matx_col == max_index) {
 	        				w_mean_array[matx_row][max_index] *= 1 - nonlin(Math.abs(goal_output-guess_value));
 	        				w_mean_array[matx_row][max_index] = nonlin(w_mean_array[matx_row][matx_col]);
