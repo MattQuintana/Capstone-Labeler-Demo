@@ -2,13 +2,17 @@ package capstone_demo;
 
 
 import java.lang.*;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
+
 import weka.attributeSelection.AttributeSelection;
 import weka.attributeSelection.CfsSubsetEval;
 import weka.attributeSelection.GreedyStepwise;
@@ -42,6 +46,8 @@ public class WekaRunner {
 	    //System.out.println("selected attribute indices (starting with 0):\n" + Utils.arrayToString(indices) + "\n");
 	    return indices;
 	}
+	
+	
 	
 	// Takes in a list of files, performs a feature analysis, and counts the 
 	// frequency by which attributes are chosen.
@@ -116,6 +122,72 @@ public class WekaRunner {
 		return best_attr;
 	}
 	
+	// Create an array of mean values for each chosen attribute index
+	public static double[] buildMeanArray(File arff_file, int[] indices) throws Exception
+	{
+		double[] mean_value_array = new double[indices.length];
+		
+		// Get a usable data
+		ConverterUtils.DataSource source = new ConverterUtils.DataSource(arff_file.getPath());
+    	Instances data = source.getDataSet();
+    	
+    	// For every index 
+    	for(int i = 0; i < indices.length; i++) {
+            //get an AttributeStats object
+            AttributeStats attStats = data.attributeStats(i);
+            Attribute selected_att = data.attribute(indices[i]);
+            // Check that we can find the numeric value of the attribute
+        	if(selected_att.isNumeric()) {
+        		Stats s = attStats.numericStats;
+        		// Get the mean value
+        		mean_value_array[i] = s.mean;
+        	}	
+        }
+    	// Return the set of mean values 
+    	return mean_value_array;
+	}
+	
+	// Save the attributes chosen to a file
+	public void saveAttributes(int[] selected_attributes)
+	{
+		File attrs_file = new File("selected_attributes.dat");
+		try 
+		{
+			DataOutputStream outstream = new DataOutputStream(new FileOutputStream(attrs_file));
+			for(Integer attribute_index: selected_attributes)
+			{
+				outstream.writeInt(attribute_index);
+			}
+		}
+		catch (Exception e)
+		{
+			System.out.println(e);
+		}	
+	}
+	
+	
+	// Load the attributes from some file previously chosen
+	public List<Integer> loadAttributes(File weights_file)
+	{
+		
+		List<Integer> attributes_list = new ArrayList<Integer>();
+		try 
+		{	
+			Scanner scan = new Scanner(weights_file);
+			while (scan.hasNextInt())
+			{
+				attributes_list.add(scan.nextInt());
+			}
+			
+		}
+		catch (Exception e)
+		{
+			//System.out.println(e);
+		}	
+		
+		return attributes_list;
+	}
+	
 	
 	public static void main(String[] args) throws Exception
 	{
@@ -129,10 +201,25 @@ public class WekaRunner {
 		File[] files = {carole_arff, elisabeth_arff, ryoko_arff, elodie_arff, helena_arff, ebba_arff};
 		
 		List<Integer[]> attr_count = frequencyCounter(files);
+		
+		/*
 		for (int i = 0; i < 10; i++)
 		{
 			System.out.println(attr_count.get(i)[0].toString() + " " + attr_count.get(i)[1].toString());
 		}
+		*/
+		
+		int[] selected_attr = new int[10];
+		for (int i = 0; i < 10; i++)
+		{
+			selected_attr[i] = attr_count.get(i)[0];
+		}
+		
+		System.out.println(Arrays.toString(selected_attr));
+		
+		double[] mean_array = buildMeanArray(carole_arff, selected_attr);
+		
+		System.out.println(Arrays.toString(mean_array));
 	}
 }
 
